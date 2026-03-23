@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/api/coingecko/(.*)",
-      "destination": "/api/coingecko/$1"
+      "source": "/api/coingecko/:path*",
+      "destination": "/api/proxy"
     },
     {
-      "source": "/api/cryptocompare/(.*)",
-      "destination": "/api/cryptocompare/$1"
+      "source": "/api/cryptocompare/:path*",
+      "destination": "/api/proxy"
     }
   ]
 }
