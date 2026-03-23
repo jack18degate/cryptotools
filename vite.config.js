@@ -15,6 +15,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/cryptocompare/, ''),
       },
+      '/api/coinpaprika': {
+        target: 'https://api.coinpaprika.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/coinpaprika/, '/v1'),
+      },
     },
   },
   build: {

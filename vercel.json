@@ -7,6 +7,10 @@
     {
       "source": "/api/cryptocompare/:path*",
       "destination": "/api/proxy"
+    },
+    {
+      "source": "/api/coinpaprika/:path*",
+      "destination": "/api/proxy"
     }
   ]
 }
