@@ -2,12 +2,14 @@ export const config = {
   runtime: 'edge',
 };
 
+// Arkham API key — in production, use Vercel Environment Variables (ARKHAM_API_KEY)
+const ARKHAM_KEY = process.env.ARKHAM_API_KEY || 'a2b649b2-4f66-4b1d-811b-a343a6dc7cb6';
+
 async function fetchWithRetry(url, options, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
 
-      // If rate limited (429) or server error (5xx), wait and retry
       if ((response.status === 429 || response.status >= 500) && i < retries - 1) {
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
         continue;
@@ -28,6 +30,10 @@ export default async function handler(request) {
   const url = new URL(request.url);
   const path = url.pathname;
   let targetUrl = '';
+  const headers = {
+    'Accept': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  };
 
   if (path.startsWith('/api/coingecko')) {
     const apiPath = path.replace('/api/coingecko', '');
@@ -38,18 +44,22 @@ export default async function handler(request) {
   } else if (path.startsWith('/api/coinpaprika')) {
     const apiPath = path.replace('/api/coinpaprika', '');
     targetUrl = `https://api.coinpaprika.com/v1${apiPath}${url.search}`;
+  } else if (path.startsWith('/api/arkham')) {
+    const apiPath = path.replace('/api/arkham', '');
+    targetUrl = `https://api.arkhamintelligence.com${apiPath}${url.search}`;
+    headers['API-Key'] = ARKHAM_KEY;
+  } else if (path.startsWith('/gamma-api')) {
+    const apiPath = path.replace('/gamma-api', '');
+    targetUrl = `https://gamma-api.polymarket.com${apiPath}${url.search}`;
+  } else if (path.startsWith('/clob-api')) {
+    const apiPath = path.replace('/clob-api', '');
+    targetUrl = `https://clob.polymarket.com${apiPath}${url.search}`;
   } else {
     return new Response('Not found', { status: 404 });
   }
 
   try {
-    const response = await fetchWithRetry(targetUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
-
+    const response = await fetchWithRetry(targetUrl, { headers });
     const data = await response.text();
 
     return new Response(data, {

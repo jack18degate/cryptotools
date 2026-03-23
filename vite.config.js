@@ -20,6 +20,28 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/coinpaprika/, '/v1'),
       },
+      '/api/arkham': {
+        target: 'https://api.arkhamintelligence.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/arkham/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('API-Key', 'a2b649b2-4f66-4b1d-811b-a343a6dc7cb6');
+          });
+        },
+      },
+      '/gamma-api': {
+        target: 'https://gamma-api.polymarket.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/gamma-api/, ''),
+        secure: true,
+      },
+      '/clob-api': {
+        target: 'https://clob.polymarket.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/clob-api/, ''),
+        secure: true,
+      },
     },
   },
   build: {

@@ -2,10 +2,21 @@
  * ATH Recovery Calculator
  * Shows how much a coin needs to rise to return to its All-Time High
  */
-import { searchCoins, getCoinData, formatPrice, formatLargeNumber, formatPercentage } from './api.js';
+import { searchCoins, getCoinData, getMarketChart, formatPrice, formatLargeNumber, formatPercentage } from './api.js';
 
 let searchTimeout = null;
 let selectedCoin = null;
+
+// Helper: APIs return 0 for missing data on smaller tokens
+function formatChange(val) {
+  if (val == null || val === 0) return 'N/D';
+  return formatPercentage(val);
+}
+
+function getChangeClass(val) {
+  if (val == null || val === 0) return '';
+  return val >= 0 ? 'green' : 'red';
+}
 
 export function renderATHCalculator() {
   return `
@@ -50,12 +61,17 @@ export function initATHCalculator() {
       return;
     }
 
+    // Show loading spinner immediately
+    dropdown.innerHTML = `<div class="search-loading"><div class="spinner"></div><span>Ricerca in corso...</span></div>`;
+    dropdown.classList.add('visible');
+
     searchTimeout = setTimeout(async () => {
       try {
         const coins = await searchCoins(query);
         renderDropdown(dropdown, coins);
       } catch (err) {
         console.error('Search error:', err);
+        dropdown.classList.remove('visible');
       }
     }, 300);
   });
@@ -75,7 +91,7 @@ function renderDropdown(dropdown, coins) {
   }
 
   dropdown.innerHTML = coins.map(coin => `
-    <div class="autocomplete-item" data-coin-id="${coin.id}">
+    <div class="autocomplete-item" data-coin-id="${coin.id}" data-coin-symbol="${coin.symbol}">
       <img src="${coin.thumb}" alt="${coin.name}" onerror="this.style.display='none'" />
       <div>
         <span class="coin-name">${coin.name}</span>
@@ -90,15 +106,16 @@ function renderDropdown(dropdown, coins) {
   dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
     item.addEventListener('click', () => {
       const coinId = item.dataset.coinId;
+      const coinSymbol = item.dataset.coinSymbol;
       const coinName = item.querySelector('.coin-name').textContent;
       document.getElementById('ath-search').value = coinName;
       dropdown.classList.remove('visible');
-      loadCoinATH(coinId);
+      loadCoinATH(coinId, coinSymbol);
     });
   });
 }
 
-async function loadCoinATH(coinId) {
+async function loadCoinATH(coinId, coinSymbol) {
   const resultsDiv = document.getElementById('ath-results');
 
   resultsDiv.innerHTML = `
@@ -112,9 +129,65 @@ async function loadCoinATH(coinId) {
     const coin = await getCoinData(coinId);
     selectedCoin = coin;
     renderATHResults(resultsDiv, coin);
+
+    // Async: fill in missing 30d/1y from CryptoCompare historical data
+    const symbol = coinSymbol || coin.symbol;
+    if (!coin.priceChangePercentage30d || !coin.priceChangePercentage1y) {
+      fillMissingChanges(symbol, coin.currentPrice);
+    }
   } catch (err) {
     resultsDiv.innerHTML = `<div class="error-msg">❌ ${err.message}</div>`;
   }
+}
+
+async function fillMissingChanges(symbol, currentPrice) {
+  try {
+    const history = await getMarketChart(symbol, 365);
+    if (!history.length || !currentPrice) return;
+
+    const now = Date.now();
+
+    // Find price ~30 days ago
+    const target30d = now - 30 * 24 * 60 * 60 * 1000;
+    const price30d = findClosestPrice(history, target30d);
+
+    // Find price ~1 year ago
+    const target1y = now - 365 * 24 * 60 * 60 * 1000;
+    const price1y = findClosestPrice(history, target1y);
+
+    if (price30d) {
+      const pct30d = ((currentPrice - price30d) / price30d) * 100;
+      updateStatElement('ath-change-30d', pct30d);
+    }
+
+    if (price1y) {
+      const pct1y = ((currentPrice - price1y) / price1y) * 100;
+      updateStatElement('ath-change-1y', pct1y);
+    }
+  } catch (err) {
+    console.warn('Could not fill missing price changes:', err.message);
+  }
+}
+
+function findClosestPrice(history, targetTs) {
+  let closest = null;
+  let minDiff = Infinity;
+  for (const p of history) {
+    const diff = Math.abs(p.timestamp - targetTs);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = p.price;
+    }
+  }
+  // Only use if within 3 days of target
+  return minDiff < 3 * 24 * 60 * 60 * 1000 ? closest : null;
+}
+
+function updateStatElement(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = formatPercentage(pct);
+  el.className = 'stat-value ' + (pct >= 0 ? 'green' : 'red');
 }
 
 function renderATHResults(container, coin) {
@@ -199,26 +272,26 @@ function renderATHResults(container, coin) {
       <div class="stat-grid" style="margin-top:24px;">
         <div class="stat-card">
           <div class="stat-label">24h</div>
-          <div class="stat-value ${coin.priceChangePercentage24h >= 0 ? 'green' : 'red'}">
-            ${formatPercentage(coin.priceChangePercentage24h)}
+          <div class="stat-value ${getChangeClass(coin.priceChangePercentage24h)}">
+            ${formatChange(coin.priceChangePercentage24h)}
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">7 giorni</div>
-          <div class="stat-value ${coin.priceChangePercentage7d >= 0 ? 'green' : 'red'}">
-            ${formatPercentage(coin.priceChangePercentage7d)}
+          <div class="stat-value ${getChangeClass(coin.priceChangePercentage7d)}">
+            ${formatChange(coin.priceChangePercentage7d)}
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">30 giorni</div>
-          <div class="stat-value ${coin.priceChangePercentage30d >= 0 ? 'green' : 'red'}">
-            ${formatPercentage(coin.priceChangePercentage30d)}
+          <div class="stat-value ${getChangeClass(coin.priceChangePercentage30d)}" id="ath-change-30d">
+            ${coin.priceChangePercentage30d ? formatChange(coin.priceChangePercentage30d) : '<span class="spinner" style="width:14px;height:14px;"></span>'}
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-label">1 anno</div>
-          <div class="stat-value ${coin.priceChangePercentage1y >= 0 ? 'green' : 'red'}">
-            ${formatPercentage(coin.priceChangePercentage1y)}
+          <div class="stat-value ${getChangeClass(coin.priceChangePercentage1y)}" id="ath-change-1y">
+            ${coin.priceChangePercentage1y ? formatChange(coin.priceChangePercentage1y) : '<span class="spinner" style="width:14px;height:14px;"></span>'}
           </div>
         </div>
       </div>

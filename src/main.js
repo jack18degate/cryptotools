@@ -5,11 +5,32 @@
 import './styles.css';
 import { renderATHCalculator, initATHCalculator } from './ath-calculator.js';
 import { renderPACCalculator, initPACCalculator } from './pac-calculator.js';
+import { renderWalletTool, initWalletTool } from './wallet-tool.js';
+import { renderPolymarketTool, initPolymarketTool } from './polymarket-tool.js';
 
 const app = document.getElementById('app');
 
 // Current active page
 let currentPage = 'ath';
+
+function getPageContent() {
+  switch (currentPage) {
+    case 'ath': return renderATHCalculator();
+    case 'pac': return renderPACCalculator();
+    case 'wallet': return renderWalletTool();
+    case 'polymarket': return renderPolymarketTool();
+    default: return renderATHCalculator();
+  }
+}
+
+function initPage() {
+  switch (currentPage) {
+    case 'ath': initATHCalculator(); break;
+    case 'pac': initPACCalculator(); break;
+    case 'wallet': initWalletTool(); break;
+    case 'polymarket': initPolymarketTool(); break;
+  }
+}
 
 function render() {
   app.innerHTML = `
@@ -25,25 +46,30 @@ function render() {
         <button class="nav-btn ${currentPage === 'pac' ? 'active' : ''}" data-page="pac">
           💰 PAC vs Inv. Singolo
         </button>
+        <button class="nav-btn ${currentPage === 'wallet' ? 'active' : ''}" data-page="wallet">
+          🔍 Wallet Intel
+        </button>
+        <button class="nav-btn ${currentPage === 'polymarket' ? 'active' : ''}" data-page="polymarket">
+          🔮 Polymarket Ita
+        </button>
       </div>
     </nav>
     <main id="page-content">
-      ${currentPage === 'ath' ? renderATHCalculator() : renderPACCalculator()}
+      ${getPageContent()}
     </main>
   `;
 
-  // Initialize the active page
-  if (currentPage === 'ath') {
-    initATHCalculator();
-  } else {
-    initPACCalculator();
-  }
+  initPage();
 
   // Navigation handlers
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const page = btn.dataset.page;
       if (page !== currentPage) {
+        // Clean up hash when leaving Polymarket
+        if (currentPage === 'polymarket') {
+          history.replaceState(null, '', window.location.pathname);
+        }
         currentPage = page;
         render();
       }

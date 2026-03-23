@@ -139,12 +139,17 @@ export function initPACCalculator() {
       return;
     }
 
+    // Show loading spinner immediately
+    dropdown.innerHTML = `<div class="search-loading"><div class="spinner"></div><span>Ricerca in corso...</span></div>`;
+    dropdown.classList.add('visible');
+
     searchTimeout = setTimeout(async () => {
       try {
         const coins = await searchCoins(query);
         renderDropdown(dropdown, coins);
       } catch (err) {
         console.error('Search error:', err);
+        dropdown.classList.remove('visible');
       }
     }, 300);
   });

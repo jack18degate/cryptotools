@@ -11,6 +11,18 @@
     {
       "source": "/api/coinpaprika/:path*",
       "destination": "/api/proxy"
+    },
+    {
+      "source": "/api/arkham/:path*",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/gamma-api/:path*",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/clob-api/:path*",
+      "destination": "/api/proxy"
     }
   ]
 }
