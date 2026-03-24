@@ -19,6 +19,10 @@ function getChangeClass(val) {
 }
 
 export function renderATHCalculator() {
+  // Dynamic import workaround — use global from main.js
+  const logo = window.__degateLogo || '/degate-logo.png';
+  const link = window.__degateLink || 'https://app.degate.com/?utm_source=walletanalyzer?s=jack18';
+
   return `
     <div class="page-container">
       <div class="section-header">
@@ -26,6 +30,16 @@ export function renderATHCalculator() {
         <h1>ATH Recovery Calculator</h1>
         <p>Scopri quanto deve salire una moneta per tornare al suo All-Time High</p>
       </div>
+
+      <a href="${link}" target="_blank" rel="noopener" class="degate-promo-banner">
+        <img src="${logo}" alt="DeGate" class="degate-promo-logo" />
+        <div class="degate-promo-content">
+          <span class="degate-promo-badge">SPONSOR</span>
+          <span class="degate-promo-title">DeGate — Wallet Web3 Multichain Selfcustody</span>
+          <span class="degate-promo-desc">Gestisci i tuoi asset in totale sicurezza con prodotti DeFi integrati</span>
+        </div>
+        <span class="degate-promo-arrow">→</span>
+      </a>
 
       <div class="glass-card">
         <div class="search-container">

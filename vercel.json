@@ -23,6 +23,14 @@
     {
       "source": "/clob-api/:path*",
       "destination": "/api/proxy"
+    },
+    {
+      "source": "/api/coinmarketcap/:path*",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/api/tiingo/:path*",
+      "destination": "/api/proxy"
     }
   ]
 }

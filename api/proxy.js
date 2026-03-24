@@ -2,8 +2,10 @@ export const config = {
   runtime: 'edge',
 };
 
-// Arkham API key — in production, use Vercel Environment Variables (ARKHAM_API_KEY)
+// API keys — in production, use Vercel Environment Variables
 const ARKHAM_KEY = process.env.ARKHAM_API_KEY || 'a2b649b2-4f66-4b1d-811b-a343a6dc7cb6';
+const CMC_KEY = process.env.CMC_API_KEY || 'b54801b516a84a10b55c5066de2866db';
+const TIINGO_KEY = process.env.TIINGO_API_KEY || '17b411bb67c24acaee75f486d1b501cfffbe9e93';
 
 async function fetchWithRetry(url, options, retries = 3) {
   for (let i = 0; i < retries; i++) {
@@ -54,6 +56,14 @@ export default async function handler(request) {
   } else if (path.startsWith('/clob-api')) {
     const apiPath = path.replace('/clob-api', '');
     targetUrl = `https://clob.polymarket.com${apiPath}${url.search}`;
+  } else if (path.startsWith('/api/coinmarketcap')) {
+    const apiPath = path.replace('/api/coinmarketcap', '');
+    targetUrl = `https://pro-api.coinmarketcap.com${apiPath}${url.search}`;
+    headers['X-CMC_PRO_API_KEY'] = CMC_KEY;
+  } else if (path.startsWith('/api/tiingo')) {
+    const apiPath = path.replace('/api/tiingo', '');
+    const separator = url.search ? '&' : '?';
+    targetUrl = `https://api.tiingo.com${apiPath}${url.search}${separator}token=${TIINGO_KEY}`;
   } else {
     return new Response('Not found', { status: 404 });
   }

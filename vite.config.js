@@ -42,6 +42,25 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/clob-api/, ''),
         secure: true,
       },
+      '/api/coinmarketcap': {
+        target: 'https://pro-api.coinmarketcap.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/coinmarketcap/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('X-CMC_PRO_API_KEY', 'b54801b516a84a10b55c5066de2866db');
+          });
+        },
+      },
+      '/api/tiingo': {
+        target: 'https://api.tiingo.com',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const newPath = path.replace(/^\/api\/tiingo/, '');
+          const sep = newPath.includes('?') ? '&' : '?';
+          return `${newPath}${sep}token=17b411bb67c24acaee75f486d1b501cfffbe9e93`;
+        },
+      },
     },
   },
   build: {

@@ -36,8 +36,8 @@ export async function renderSearch(container, query) {
       <!-- Sponsor -->
       <section class="sponsor-banner" style="margin-top:32px">
         <div class="sponsor-badge">⭐ Partner Consigliato</div>
-        <h3>Esplora il Trading Decentralizzato</h3>
-        <p>DeGate: exchange decentralizzato con zero gas fees su Ethereum.</p>
+        <h3>Prova DeGate — Wallet Web3 Multichain</h3>
+        <p>Wallet selfcustody con prodotti DeFi integrati. Gestisci i tuoi asset in totale sicurezza.</p>
         <a href="${DEGATE_LINK}" target="_blank" rel="noopener" class="sponsor-cta">
           Inizia con DeGate →
         </a>
@@ -73,20 +73,44 @@ export async function renderSearch(container, query) {
   }
 }
 
+function filterActiveEvents(events) {
+  const now = new Date();
+  return (events || []).filter(event => {
+    if (event.closed) return false;
+    if (!event.active) return false;
+    if (event.resolved) return false;
+    const endDateStr = event.endDate || event.endDateIso || event.end_date_iso || event.expirationDate;
+    if (endDateStr) {
+      const end = new Date(endDateStr);
+      if (!isNaN(end.getTime()) && end < now) return false;
+    }
+    const markets = event.markets || [];
+    if (markets.length > 0) {
+      if (markets.every(m => m.closed || m.resolved)) return false;
+      if (markets.every(m => {
+        const mEnd = m.endDate || m.endDateIso || m.end_date_iso;
+        return mEnd && !isNaN(new Date(mEnd).getTime()) && new Date(mEnd) < now;
+      })) return false;
+    }
+    return true;
+  });
+}
+
 async function loadTrendingAll() {
   const resultsDiv = document.getElementById('search-results');
   if (!resultsDiv) return;
 
   try {
     const events = await fetchTrendingMarkets();
-    if (!events || events.length === 0) {
+    const filtered = filterActiveEvents(events);
+    if (filtered.length === 0) {
       resultsDiv.innerHTML = emptyState();
       return;
     }
 
     resultsDiv.innerHTML = `
       <div class="markets-grid">
-        ${events.map((event, i) => renderEventCard(event, i)).join('')}
+        ${filtered.map((event, i) => renderEventCard(event, i)).join('')}
       </div>
     `;
 
@@ -104,7 +128,7 @@ async function performSearch(query) {
 
   try {
     const data = await searchEventsAndMarkets(query);
-    const events = data?.events || [];
+    const events = filterActiveEvents(data?.events || []);
 
     if (events.length === 0) {
       resultsDiv.innerHTML = emptyState(query);

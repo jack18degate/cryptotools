@@ -131,8 +131,8 @@ export async function renderDashboard(container) {
     <!-- Sponsor -->
     <section class="sponsor-banner fade-in">
       <div class="sponsor-badge">⭐ Partner Consigliato</div>
-      <h3>Fai Trading Decentralizzato con DeGate</h3>
-      <p>Exchange decentralizzato con zero gas fees, self-custody e la sicurezza di Ethereum. Perfetto per chi vuole fare trading in modo sicuro.</p>
+      <h3>Prova DeGate — Wallet Web3 Multichain</h3>
+      <p>Wallet selfcustody con prodotti DeFi integrati: trading, bridge, e gestione asset in totale sicurezza.</p>
       <a href="${DEGATE_LINK}" target="_blank" rel="noopener" class="sponsor-cta">
         Prova DeGate Gratis →
       </a>
@@ -389,6 +389,8 @@ async function loadItalyEvents(container) {
 // ==============================
 
 function filterEvents(events) {
+  const now = new Date();
+
   return events.filter(event => {
     // Filter by volume
     const vol = event.volume || event.volume24hr || 0;
@@ -397,11 +399,31 @@ function filterEvents(events) {
     // Filter out closed/resolved/inactive events
     if (event.closed) return false;
     if (!event.active) return false;
+    if (event.resolved) return false;
 
-    // Filter out events with endDate in the past
-    if (event.endDate) {
-      const end = new Date(event.endDate);
-      if (end < new Date()) return false;
+    // Filter out events with endDate/endDateIso/expirationDate in the past
+    const endDateStr = event.endDate || event.endDateIso || event.end_date_iso || event.expirationDate;
+    if (endDateStr) {
+      const end = new Date(endDateStr);
+      if (!isNaN(end.getTime()) && end < now) return false;
+    }
+
+    // Filter out events where ALL sub-markets are closed or resolved
+    const markets = event.markets || [];
+    if (markets.length > 0) {
+      const allClosed = markets.every(m => m.closed || m.resolved);
+      if (allClosed) return false;
+
+      // Check individual market end dates
+      const allPast = markets.every(m => {
+        const mEnd = m.endDate || m.endDateIso || m.end_date_iso;
+        if (mEnd) {
+          const d = new Date(mEnd);
+          return !isNaN(d.getTime()) && d < now;
+        }
+        return false;
+      });
+      if (allPast) return false;
     }
 
     return true;
