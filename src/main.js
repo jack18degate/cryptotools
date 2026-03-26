@@ -3,11 +3,15 @@
  * Sidebar navigation and routing between tools
  */
 import './styles.css';
+import { inject } from '@vercel/analytics';
 import { renderATHCalculator, initATHCalculator } from './ath-calculator.js';
 import { renderPACCalculator, initPACCalculator } from './pac-calculator.js';
 import { renderWalletTool, initWalletTool } from './wallet-tool.js';
 import { renderPolymarketTool, initPolymarketTool } from './polymarket-tool.js';
 import degateLogo from '/degate-logo.png';
+
+// Initialize Vercel Analytics
+inject();
 
 const app = document.getElementById('app');
 
