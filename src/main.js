@@ -8,6 +8,7 @@ import { renderATHCalculator, initATHCalculator } from './ath-calculator.js';
 import { renderPACCalculator, initPACCalculator } from './pac-calculator.js';
 import { renderWalletTool, initWalletTool } from './wallet-tool.js';
 import { renderPolymarketTool, initPolymarketTool } from './polymarket-tool.js';
+import { inject } from '@vercel/analytics';
 import degateLogo from '/degate-logo.png';
 
 // Initialize Vercel Analytics
@@ -155,6 +156,9 @@ function render() {
     toggleSidebar(false);
   });
 }
+
+// Initialize Vercel Analytics
+inject();
 
 // Initial render
 render();
