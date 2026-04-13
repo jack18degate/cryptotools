@@ -9,6 +9,7 @@ import { renderPACCalculator, initPACCalculator } from './pac-calculator.js';
 import { renderWalletTool, initWalletTool } from './wallet-tool.js';
 import { renderPolymarketTool, initPolymarketTool } from './polymarket-tool.js';
 import degateLogo from '/degate-logo.png';
+import officinaLogo from '/officina-logo.png';
 
 // Initialize Vercel Analytics
 inject();
@@ -85,15 +86,22 @@ function render() {
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <a href="#" class="sidebar-logo" id="sidebar-logo">
-          <span class="logo-icon">🚀</span>
-          <span class="logo-text">Crypto DeFi Tools</span>
+        <a href="#" class="sidebar-logo" id="sidebar-logo" style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; text-decoration: none;">
+          <img src="${officinaLogo}" alt="Officina DeFi" style="height: 36px; width: 36px; border-radius: 50%; object-fit: cover;" />
+          <span class="logo-text" style="font-size: 1.1rem; font-weight: 700; color: var(--text);">Officina DeFi</span>
         </a>
       </div>
 
       <nav class="sidebar-nav">
         ${navItemsHTML}
       </nav>
+
+      <div class="sidebar-socials" style="display: flex; gap: 16px; justify-content: center; padding: 16px 20px; border-top: 1px solid var(--border);">
+        <a href="https://t.me/officinadefi" target="_blank" rel="noopener" title="Telegram" style="font-size: 24px; text-decoration: none;">✈️</a>
+        <a href="https://x.com/OfficinaDefi" target="_blank" rel="noopener" title="X (Twitter)" style="font-size: 24px; text-decoration: none;">🐦</a>
+        <a href="https://www.instagram.com/officinadefi/" target="_blank" rel="noopener" title="Instagram" style="font-size: 24px; text-decoration: none;">📸</a>
+        <a href="https://www.officinadefi.com/" target="_blank" rel="noopener" title="Website" style="font-size: 24px; text-decoration: none;">🌐</a>
+      </div>
 
       <div class="sidebar-footer">
         <a href="${DEGATE_LINK}" target="_blank" rel="noopener" class="degate-cta-sidebar">
