@@ -3,8 +3,7 @@
 // ==============================
 
 import { getMarketById, getPriceHistory } from '../api.js';
-import { formatCurrency, formatPercent, formatPriceChange, parseOutcomes, parseClobTokenIds, defaultImage, getPlaceholder, timeAgo } from '../utils.js';
-import { navigate } from '../router.js';
+import { formatCurrency, formatPercent, formatPriceChange, parseOutcomes, parseClobTokenIds, defaultImage, getPlaceholder } from '../utils.js';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -13,10 +12,16 @@ const DEGATE_LINK = 'https://app.degate.com/?utm_source=walletanalyzer?s=jack18'
 
 let chartInstance = null;
 
-export async function renderMarketDetail(container, marketId) {
+export async function renderMarketDetail(container, marketId, onBack) {
+  // Prevent ghost charts
+  if (chartInstance) {
+    chartInstance.destroy();
+    chartInstance = null;
+  }
+
   container.innerHTML = `
     <div class="market-detail">
-      <button class="back-btn" id="back-btn">← Torna alla Dashboard</button>
+      <button class="back-btn" id="pm-back-btn">← Torna indietro</button>
       <div style="text-align:center;padding:60px 0">
         <div class="skeleton" style="width:80px;height:80px;border-radius:12px;margin:0 auto 16px"></div>
         <div class="skeleton" style="width:300px;height:24px;margin:0 auto 8px"></div>
@@ -25,21 +30,21 @@ export async function renderMarketDetail(container, marketId) {
     </div>
   `;
 
-  document.getElementById('back-btn')?.addEventListener('click', () => navigate('/'));
+  document.getElementById('pm-back-btn')?.addEventListener('click', onBack);
 
   try {
     const market = await getMarketById(marketId);
     if (!market) {
       container.innerHTML = `
         <div class="market-detail">
-          <button class="back-btn" id="back-btn">← Torna alla Dashboard</button>
+          <button class="back-btn" id="pm-back-btn">← Torna indietro</button>
           <div class="empty-state">
             <div class="empty-icon">❌</div>
             <p>Mercato non trovato</p>
           </div>
         </div>
       `;
-      document.getElementById('back-btn')?.addEventListener('click', () => navigate('/'));
+      document.getElementById('pm-back-btn')?.addEventListener('click', onBack);
       return;
     }
 
@@ -53,7 +58,7 @@ export async function renderMarketDetail(container, marketId) {
 
     container.innerHTML = `
       <div class="market-detail fade-in">
-        <button class="back-btn" id="back-btn">← Torna alla Dashboard</button>
+        <button class="back-btn" id="pm-back-btn">← Torna indietro</button>
 
         <div class="market-detail-header">
           <img class="market-detail-image" src="${image}" alt="" onerror="this.src='${getPlaceholder()}'" />
@@ -85,24 +90,14 @@ export async function renderMarketDetail(container, marketId) {
         </div>
 
         <!-- Stats Grid -->
-        <div class="stats-row" style="margin-bottom:24px">
-          <div class="stat-card">
-            <div class="stat-label">Volume</div>
-            <div class="stat-value" style="font-size:22px">${formatCurrency(market.volumeNum || market.volume)}</div>
+        <div class="stats-row" style="margin-bottom:24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+          <div class="stat-card" style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <div class="stat-label" style="color:var(--text-secondary); font-size:12px; margin-bottom:4px">Volume</div>
+            <div class="stat-value" style="font-size:22px; font-family:var(--font-mono); font-weight:700;">${formatCurrency(market.volumeNum || market.volume)}</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">Liquidità</div>
-            <div class="stat-value" style="font-size:22px">${formatCurrency(market.liquidityNum || market.liquidity)}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Variazione 24h</div>
-            <div class="stat-value price-change ${(market.oneDayPriceChange || 0) >= 0 ? 'positive' : 'negative'}" style="font-size:22px">
-              ${formatPriceChange(market.oneDayPriceChange)}
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Spread</div>
-            <div class="stat-value" style="font-size:22px">${market.spread != null ? formatPercent(market.spread / 100, 2) : 'N/A'}</div>
+          <div class="stat-card" style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <div class="stat-label" style="color:var(--text-secondary); font-size:12px; margin-bottom:4px">Liquidità</div>
+            <div class="stat-value" style="font-size:22px; font-family:var(--font-mono); font-weight:700;">${formatCurrency(market.liquidityNum || market.liquidity)}</div>
           </div>
         </div>
 
@@ -126,7 +121,7 @@ export async function renderMarketDetail(container, marketId) {
 
         <!-- Actions -->
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
-          <a href="${polymarketUrl}" target="_blank" rel="noopener" class="market-detail-link">
+          <a href="${polymarketUrl}" target="_blank" rel="noopener" class="market-detail-link" style="padding: 12px 24px; background: var(--accent-gradient); border-radius: 8px; color: white; text-decoration: none; font-weight: 600;">
             🔗 Apri su Polymarket
           </a>
         </div>
@@ -144,7 +139,7 @@ export async function renderMarketDetail(container, marketId) {
     `;
 
     // Bind back button
-    document.getElementById('back-btn')?.addEventListener('click', () => navigate('/'));
+    document.getElementById('pm-back-btn')?.addEventListener('click', onBack);
 
     // Load chart if we have token IDs
     if (tokenIds.length > 0) {
@@ -164,23 +159,15 @@ export async function renderMarketDetail(container, marketId) {
     console.error('Error loading market detail:', err);
     container.innerHTML = `
       <div class="market-detail">
-        <button class="back-btn" id="back-btn">← Torna alla Dashboard</button>
+        <button class="back-btn" id="pm-back-btn">← Torna indietro</button>
         <div class="empty-state">
           <div class="empty-icon">⚠️</div>
           <p>Errore nel caricamento del mercato</p>
         </div>
       </div>
     `;
-    document.getElementById('back-btn')?.addEventListener('click', () => navigate('/'));
+    document.getElementById('pm-back-btn')?.addEventListener('click', onBack);
   }
-
-  // Cleanup function
-  return () => {
-    if (chartInstance) {
-      chartInstance.destroy();
-      chartInstance = null;
-    }
-  };
 }
 
 async function loadPriceChart(tokenId, interval) {
@@ -189,16 +176,11 @@ async function loadPriceChart(tokenId, interval) {
 
   try {
     const data = await getPriceHistory(tokenId, interval);
-    if (!data?.history || data.history.length === 0) {
-      return;
-    }
+    if (!data?.history || data.history.length === 0) return;
 
     const labels = data.history.map(p => {
       const date = new Date(p.t * 1000);
-      if (interval === '1h' || interval === '6h') {
-        return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-      }
-      if (interval === '1d') {
+      if (interval === '1h' || interval === '6h' || interval === '1d') {
         return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       }
       return date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
@@ -206,9 +188,7 @@ async function loadPriceChart(tokenId, interval) {
 
     const prices = data.history.map(p => p.p);
 
-    if (chartInstance) {
-      chartInstance.destroy();
-    }
+    if (chartInstance) chartInstance.destroy();
 
     const ctx = canvas.getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -220,7 +200,6 @@ async function loadPriceChart(tokenId, interval) {
       data: {
         labels,
         datasets: [{
-          label: 'Prezzo',
           data: prices,
           borderColor: '#7c3aed',
           backgroundColor: gradient,
@@ -229,52 +208,22 @@ async function loadPriceChart(tokenId, interval) {
           tension: 0.4,
           pointRadius: 0,
           pointHoverRadius: 5,
-          pointHoverBackgroundColor: '#7c3aed',
-          pointHoverBorderColor: '#fff',
-          pointHoverBorderWidth: 2,
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(12, 18, 34, 0.95)',
-            titleColor: '#f1f5f9',
-            bodyColor: '#f1f5f9',
-            borderColor: 'rgba(124, 58, 237, 0.3)',
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 8,
-            callbacks: {
-              label: (ctx) => `Probabilità: ${(ctx.raw * 100).toFixed(1)}%`,
-            }
+            callbacks: { label: (ctx) => `Probabilità: ${(ctx.raw * 100).toFixed(1)}%` }
           }
         },
         scales: {
-          x: {
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            ticks: {
-              color: '#64748b',
-              font: { size: 10 },
-              maxTicksLimit: 8,
-            }
-          },
-          y: {
-            min: 0,
-            max: 1,
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            ticks: {
-              color: '#64748b',
-              font: { size: 10 },
-              callback: (val) => `${(val * 100).toFixed(0)}%`,
-            }
-          }
+          x: { ticks: { color: '#64748b', maxTicksLimit: 8 } },
+          y: { min: 0, max: 1, ticks: { color: '#64748b', callback: (val) => `${(val * 100).toFixed(0)}%` } }
         }
       }
     });
