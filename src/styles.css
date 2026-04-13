@@ -705,6 +705,15 @@ body::before {
 .comparison-table-container {
   overflow-x: auto;
   margin: 24px 0;
+  background:
+    linear-gradient(to right, var(--bg-card) 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, var(--bg-card) 30%, rgba(255, 255, 255, 0)) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-color: var(--bg-card);
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 .comparison-table {

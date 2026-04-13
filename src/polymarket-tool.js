@@ -32,7 +32,7 @@ export function initPolymarketTool() {
   // Render the Polymarket shell
   pmApp.innerHTML = `
     ${renderHeader()}
-    <main class="main-content" id="pm-page-content"></main>
+    <main class="pm-main-content" id="pm-page-content"></main>
     <footer class="footer">
       <div class="footer-inner">
         <div class="footer-disclaimer">
@@ -53,7 +53,7 @@ export function initPolymarketTool() {
       e.preventDefault();
       const target = el.dataset.nav;
       navigate(target);
-      pmApp.querySelector('.main-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      pmApp.querySelector('.pm-main-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
 

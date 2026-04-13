@@ -1205,7 +1205,7 @@
 }
 
 @media (max-width: 480px) {
-  .pm-scope .main-content {
+  .pm-scope .pm-main-content {
     padding: 16px;
   }
 

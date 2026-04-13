@@ -76,10 +76,10 @@ async function resilientFetch(url) {
       return await res.json();
     } catch (err) {
       lastError = err;
-      // Network errors — retry with backoff
-      if (err.name === 'TypeError' || err.message.includes('fetch')) {
+      // Network and JSON parsing errors — retry with backoff
+      if (err.name === 'TypeError' || err.name === 'SyntaxError' || err.message.includes('fetch') || err.message.includes('JSON')) {
         const waitMs = Math.min(BASE_DELAY * Math.pow(2, attempt), MAX_DELAY);
-        console.warn(`Network error on ${url}, waiting ${waitMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        console.warn(`Network/Parse error on ${url}, waiting ${waitMs}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
         await sleep(waitMs);
         continue;
       }
@@ -268,7 +268,11 @@ async function cmcCoinData(coinIdOrSymbol) {
     `coin:cmc:${slug}`
   );
 
-  const entries = Object.values(data.data || {});
+  if (!data || !data.data) {
+    throw new Error('CoinMarketCap ha restituito un formato non valido o errore rate-limit');
+  }
+
+  const entries = Object.values(data.data);
   if (!entries.length) throw new Error('Moneta non trovata su CoinMarketCap');
   const coin = entries[0];
   const quote = coin.quote?.USD || {};
@@ -351,7 +355,7 @@ async function cryptoCompareHistory(symbol, days) {
   const seen = new Set();
   const result = [];
   for (const p of allData) {
-    if (!seen.has(p.time) && p.close > 0) {
+    if (!seen.has(p.time) && p.close != null && p.close > 0) {
       seen.add(p.time);
       result.push({
         timestamp: p.time * 1000,
